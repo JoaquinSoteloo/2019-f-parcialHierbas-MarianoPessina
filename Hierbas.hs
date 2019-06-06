@@ -51,8 +51,8 @@ hierbaBuena raton = rejuvenecer (sqrt (edad raton)) raton
 rejuvenecer :: Edad -> Raton -> Raton
 rejuvenecer anios raton = raton {edad = anios}
 
---hierbaVerde :: String -> Hierba
---hierbaVerde terminacion raton = (terminaCon terminacion raton)
+hierbaVerde :: String -> Hierba
+hierbaVerde terminacion raton = raton
 
 
 
@@ -60,8 +60,8 @@ alcachofa :: Hierba
 alcachofa raton = perderPeso ((peso raton) * (coeficiente raton)) raton
 
 coeficiente :: Raton -> Float
-coeficiente raton | peso raton > 2 = 0.2
-                  | otherwise = 0.1
+coeficiente raton | (peso raton) > 2 = 0.1
+                  | otherwise = 0.05
 
 perderPeso :: Peso -> Raton -> Raton
 perderPeso pesoAPerder raton | (peso raton) > pesoAPerder = raton {peso = (peso raton) - pesoAPerder}
@@ -82,4 +82,22 @@ hierbaDelDiablo = (perderPeso 0.1).(eliminarEnfermedades 10)
 eliminarEnfermedades :: Int -> Raton -> Raton
 eliminarEnfermedades cantidadDeLetrasMax raton = raton {enfermedades = (filter ((<=10).length) (enfermedades raton))}
 
+--medicamentos
+type Medicamento = Raton -> Raton
 
+pondsAntiAge :: Medicamento
+pondsAntiAge = hierbaBuena.hierbaBuena.hierbaBuena.alcachofa
+
+reduceFatFast :: Int -> Hierba -> Medicamento
+reduceFatFast 0 hierbaVerde = hierbaVerde
+reduceFatFast potencia hierbaVerde = reduceFatFast (potencia-1) ((.)alcachofa)
+
+--pdepCilina :: [String] -> 
+--pdepCilina sufijosInfecciosas =
+--sufijosInfecciosas = [ "sis", "itis", "emia", "cocos"]
+
+--experimentos 
+
+cantidadIdeal :: (a->Bool) -> a -> a
+cantidadIdeal condicion contador | (condicion contador) = contador
+                                 | otherwise = cantidadIdeal condicion (contador+1)
