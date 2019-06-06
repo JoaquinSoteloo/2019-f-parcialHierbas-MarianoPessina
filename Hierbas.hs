@@ -52,9 +52,10 @@ rejuvenecer :: Edad -> Raton -> Raton
 rejuvenecer anios raton = raton {edad = anios}
 
 hierbaVerde :: String -> Hierba
-hierbaVerde terminacion raton = raton
+hierbaVerde terminacion raton = raton {enfermedades = filter (terminaCon terminacion) (enfermedades raton)}
 
-
+terminaCon :: String -> String -> Bool
+terminaCon terminacion enfermedad =  
 
 alcachofa :: Hierba
 alcachofa raton = perderPeso ((peso raton) * (coeficiente raton)) raton
@@ -88,16 +89,58 @@ type Medicamento = Raton -> Raton
 pondsAntiAge :: Medicamento
 pondsAntiAge = hierbaBuena.hierbaBuena.hierbaBuena.alcachofa
 
-reduceFatFast :: Int -> Hierba -> Medicamento
-reduceFatFast 0 hierbaVerde = hierbaVerde
-reduceFatFast potencia hierbaVerde = reduceFatFast (potencia-1) ((.)alcachofa)
+--reduceFatFast :: Int -> Hierba -> Medicamento
+--reduceFatFast 0 hierbaVerde = hierbaVerde
+--reduceFatFast potencia hierbaVerde = reduceFatFast (potencia-1) ((.)alcachofa)
 
 --pdepCilina :: [String] -> 
 --pdepCilina sufijosInfecciosas =
 --sufijosInfecciosas = [ "sis", "itis", "emia", "cocos"]
 
---experimentos 
+-- 4 experimentos 
+--a
+cantidadIdeal :: (Num a, Enum a) => (a -> Bool) -> a
+cantidadIdeal condicion = head (filter condicion [1..])
+--b
+lograEstabilizar :: Medicamento -> [Raton] -> Bool
+lograEstabilizar medicamento ratones = ningunoConSobrepeso(medicarRatones) && menosDe3Enfermedades(medicarRatones)
 
-cantidadIdeal :: (a->Bool) -> a -> a
-cantidadIdeal condicion contador | (condicion contador) = contador
-                                 | otherwise = cantidadIdeal condicion (contador+1)
+medicarRatones :: Medicamento -> [Raton]
+medicarRatones medicamento ratones = foldl1 medicamento ratones
+
+ningunoConSobrepeso :: [Raton] -> Bool
+ningunoConSobrepeso ratones = all ((<1).peso) ratones
+
+menosDe3Enfermedades :: [Raton] -> Bool
+menosDe3Enfermedades ratones = all ((<3).(length enfermedades))
+--c
+cantidadIdeal (lograEstabilizar (reduceFatFast potencia hierbaVerde) comunidad) 
+
+--5
+{-a
+En el caso en que no logre estabilizar a toda la comunidad, si obtendremos respuesta ya que dejará de iterar 
+cuando encuentre al primer caso que no cumpla con la condición requerida.
+Nunca podremos saber si la condición se cumple para todos ya que nunca dejará de probar a menos que encuentre un caso falso
+-}
+
+{-b
+Si es verdadero, lo sabremos en cuanto encuentre al primer ratón cumpla con pesar 2kg y tener 4 enfermedades
+En cambio si es falso, nunca lo sabremos ya que continuará iterando infinitamente, a menos que encuentre un caso verdadero
+-}
+
+--6
+{-a
+simplemente hay que agregar la hierba, no es necesario cambiar ninguna de las otras funciones, a menos que 
+cambie la definición de algún medicamento debido a la nueva hierba
+-}
+
+{-b
+El concepto que está involucrado en la pregunta anterior es 
+tengo 3 capas de funciones, las principales
+-}
+
+{-c
+Si se quiere poner el peso en libras hay que cambiar todas las funciones que hagan cálculos o comparaciones
+con el peso ya que están puestas en kg
+Ej: si un ratón pesa más de 2kg, hay que transformar el 2 a libras.
+-}
