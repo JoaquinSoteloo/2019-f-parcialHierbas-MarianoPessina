@@ -94,7 +94,7 @@ reduceFatFast :: Int -> Medicamento
 reduceFatFast potencia = composicionDeLista (listaDeHierbas potencia)
 
 listaDeHierbas :: Int -> [Hierba]
-listaDeHierbas potencia = (replicate potencia alcachofa) ++ [(hierbaVerde "obesidad")]
+listaDeHierbas potencia = (replicate potencia alcachofa) ++ [(hierbaVerde "Obesidad")]
 
 pdepCilina :: [String] -> Medicamento
 pdepCilina sufijosInfecciosas = composicionDeLista (map (hierbaVerde) sufijosInfecciosas)
@@ -110,16 +110,17 @@ cantidadIdeal condicion = head (filter condicion [1..])
 --b
 
 lograEstabilizar :: Medicamento -> [Raton] -> Bool
-lograEstabilizar medicamento ratones = ningunoConSobrepeso(medicarRatones) && menosDe3Enfermedades(medicarRatones)
+lograEstabilizar medicamento ratones = ningunoConSobrepeso(medicarRatones medicamento ratones) && menosDe3Enfermedades(medicarRatones medicamento ratones)
 
-medicarRatones :: Medicamento -> [Raton]
-medicarRatones medicamento ratones = foldl1 medicamento ratones
+medicarRatones :: Medicamento -> [Raton] -> [Raton]
+medicarRatones medicamento ratones = map medicamento ratones
 
 ningunoConSobrepeso :: [Raton] -> Bool
 ningunoConSobrepeso ratones = all ((<1).peso) ratones
 
 menosDe3Enfermedades :: [Raton] -> Bool
-menosDe3Enfermedades ratones = all ((<3).(length enfermedades))
+menosDe3Enfermedades ratones = all ((<3).(length.enfermedades)) ratones
+
 --c
 --cantidadIdeal (lograEstabilizar (reduceFatFast potencia hierbaVerde) comunidad) 
 
@@ -142,8 +143,10 @@ cambie la definición de algún medicamento debido a la nueva hierba
 -}
 
 {-b
-El concepto que está involucrado en la pregunta anterior es 
-tengo 3 capas de funciones, las principales
+El concepto que está involucrado en la pregunta anterior es ...
+tengo 3 capas de funciones, las principales, las que interactuan con ellas y las que interactuan con las segundas
+las principales interactuan con los data
+si cambio algo de algún data voy a tener que cambiar ese primer grupo de funciones, no las que las llaman que seguirán recibiendo lo mismo.
 -}
 
 {-c
