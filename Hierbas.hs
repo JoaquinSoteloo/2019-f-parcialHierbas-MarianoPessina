@@ -53,24 +53,23 @@ rejuvenecer :: Edad -> Raton -> Raton
 rejuvenecer anios raton = raton {edad = anios}
 
 hierbaVerde :: String -> Hierba
-hierbaVerde terminacion raton = raton {enfermedades = filter (terminaCon terminacion) (enfermedades raton)}
+hierbaVerde terminacion raton = raton {enfermedades = filter (not.terminaCon terminacion) (enfermedades raton)}
 
 terminaCon :: String -> String -> Bool
-terminaCon terminacion enfermedad = not((reverse terminacion) == take (length terminacion) (reverse enfermedad)) 
+terminaCon terminacion enfermedad = terminacion == drop (length enfermedad - length terminacion) enfermedad
 
 alcachofa :: Hierba
-alcachofa raton = perderPeso ((peso raton) * (coeficiente raton)) raton
+alcachofa raton = perderPeso (peso raton * coeficiente raton) raton
 
 coeficiente :: Raton -> Float
 coeficiente raton | (peso raton) > 2 = 0.1
                   | otherwise = 0.05
 
 perderPeso :: Peso -> Raton -> Raton
-perderPeso pesoAPerder raton | (peso raton) > pesoAPerder = raton {peso = (peso raton) - pesoAPerder}
-                             | otherwise = raton {peso = 0}
+perderPeso pesoAPerder raton = raton {peso = max (peso raton - pesoAPerder) 0}
 
 hierbaZort :: Hierba
-hierbaZort = (cambiarNombreA "pinky").(rejuvenecer 0).perderEnfermedades
+hierbaZort = cambiarNombreA "pinky" . rejuvenecer 0 . perderEnfermedades
 
 perderEnfermedades :: Raton -> Raton
 perderEnfermedades raton = raton {enfermedades = []}
@@ -79,30 +78,32 @@ cambiarNombreA :: Nombre -> Raton -> Raton
 cambiarNombreA nuevoNombre raton = raton {nombre = nuevoNombre}
 
 hierbaDelDiablo :: Hierba
-hierbaDelDiablo = (perderPeso 0.1).(eliminarEnfermedades 10)
+hierbaDelDiablo = perderPeso 0.1 . eliminarEnfermedades 10 
 
 eliminarEnfermedades :: Int -> Raton -> Raton
-eliminarEnfermedades cantidadDeLetrasMax raton = raton {enfermedades = (filter ((<=10).length) (enfermedades raton))}
+eliminarEnfermedades cantidadDeLetrasMax raton = raton {enfermedades = filter ((<=cantidadDeLetrasMax).length) (enfermedades raton)}
 
 --medicamentos
 type Medicamento = Raton -> Raton
 
 pondsAntiAge :: Medicamento
-pondsAntiAge = composicionDeLista [hierbaBuena,hierbaBuena,hierbaBuena,alcachofa]
+pondsAntiAge = componer [hierbaBuena,hierbaBuena,hierbaBuena,alcachofa]
 
 reduceFatFast :: Int -> Medicamento
-reduceFatFast potencia = composicionDeLista (listaDeHierbas potencia)
+reduceFatFast = componer . listaDeHierbas
 
 listaDeHierbas :: Int -> [Hierba]
-listaDeHierbas potencia = (replicate potencia alcachofa) ++ [(hierbaVerde "Obesidad")]
+listaDeHierbas potencia = replicate potencia alcachofa ++ [hierbaVerde "Obesidad"]
 
-pdepCilina :: [String] -> Medicamento
-pdepCilina sufijosInfecciosas = composicionDeLista (map (hierbaVerde) sufijosInfecciosas)
+pdepCilina :: Medicamento
+pdepCilina = componer (map hierbaVerde sufijosInfecciosas)
+
+sufijosInfecciosas :: [String]
 sufijosInfecciosas = ["sis", "itis", "emia", "cocos"]
 
-composicionDeLista :: [Hierba] -> (Raton -> Raton)
-composicionDeLista [] = id
-composicionDeLista (x:xs) = x.(composicionDeLista xs)
+componer :: [Hierba] -> Medicamento
+componer [] = id
+componer (x:xs) = x . componer xs
 -- 4 experimentos 
 --a
 cantidadIdeal :: (Num a, Enum a) => (a -> Bool) -> a
@@ -110,47 +111,50 @@ cantidadIdeal condicion = head (filter condicion [1..])
 --b
 
 lograEstabilizar :: Medicamento -> [Raton] -> Bool
-lograEstabilizar medicamento ratones = ningunoConSobrepeso(medicarRatones medicamento ratones) && menosDe3Enfermedades(medicarRatones medicamento ratones)
+lograEstabilizar medicamento ratones = ningunoConSobrepeso (medicarRatones medicamento ratones) && menosDe3Enfermedades (medicarRatones medicamento ratones)
 
 medicarRatones :: Medicamento -> [Raton] -> [Raton]
-medicarRatones medicamento ratones = map medicamento ratones
+medicarRatones = map
 
 ningunoConSobrepeso :: [Raton] -> Bool
 ningunoConSobrepeso ratones = all ((<1).peso) ratones
 
 menosDe3Enfermedades :: [Raton] -> Bool
-menosDe3Enfermedades ratones = all ((<3).(length.enfermedades)) ratones
+menosDe3Enfermedades ratones = all ((<3).length.enfermedades) ratones
 
 --c
---cantidadIdeal (lograEstabilizar (reduceFatFast potencia hierbaVerde) comunidad) 
+experimento :: [Raton] -> Int
+experimento comunidad = cantidadIdeal (\potencia -> lograEstabilizar (reduceFatFast potencia) comunidad) 
 
 --5
 {-a
-En el caso en que no logre estabilizar a toda la comunidad, si obtendremos respuesta ya que dejará de iterar 
-cuando encuentre al primer caso que no cumpla con la condición requerida.
-Nunca podremos saber si la condición se cumple para todos ya que nunca dejará de probar a menos que encuentre un caso falso
+No podremos saber si se estabiliza esa comunidad en el caso a). Cuando la comunidad sea infinita y 
+todos los ratones cumplan las condiciones, lograEstabilizar se quedará "colgada" sin dar ningún 
+resultado. Eso es porque ningunoConSobrepeso utiliza el all, que nunca dejará de probar a menos 
+que encuentre un caso falso.
 -}
 
 {-b
-Si es verdadero, lo sabremos en cuanto encuentre al primer ratón cumpla con pesar 2kg y tener 4 enfermedades
-En cambio si es falso, nunca lo sabremos ya que continuará iterando infinitamente, a menos que encuentre un caso verdadero
+Sí podremos saber si se estabiliza la comunidad en el caso b). Cuando la comunidad tenga un ratón
+que no cumple las condiciones de estabilización, lograEstabilizar retornará False. Eso es porque
+ambos all de ningunoConSobrepeso y menosDe3Enfermedades terminan y dan False, porque el mecanismo
+de Lazy Evaluation (evaluación diferida) le permite a Haskell no evaluar toda la lista para darse cuenta.
 -}
 
 --6
 {-a
-simplemente hay que agregar la hierba, no es necesario cambiar ninguna de las otras funciones, a menos que 
-cambie la definición de algún medicamento debido a la nueva hierba
+Simplemente hay que agregar la hierba, no es necesario cambiar ninguna de las otras funciones.
+Debe respetar el tipo Hierba, y si respeta ese tipo puede utilizarse en funciones como la función "componer".
 -}
 
 {-b
-El concepto que está involucrado en la pregunta anterior es ...
-tengo 3 capas de funciones, las principales, las que interactuan con ellas y las que interactuan con las segundas
-las principales interactuan con los data
-si cambio algo de algún data voy a tener que cambiar ese primer grupo de funciones, no las que las llaman que seguirán recibiendo lo mismo.
+El concepto que está involucrado en la pregunta anterior es el de TAD, en donde se toma a la Hierba
+como un valor, y en particular la función "componer" como una primitiva. Si cambia el modelado de las 
+hierbas, no hace falta cambiar ninguno de los medicamentos.
 -}
 
 {-c
 Si se quiere poner el peso en libras hay que cambiar todas las funciones que hagan cálculos o comparaciones
-con el peso ya que están puestas en kg
+con el peso ya que están puestas en kg.
 Ej: si un ratón pesa más de 2kg, hay que transformar el 2 a libras.
 -}
